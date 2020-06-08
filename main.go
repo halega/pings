@@ -30,11 +30,9 @@ func main() {
 	host = flag.Arg(0)
 
 	header := tview.NewTextView()
-	//header.SetBackgroundColor(tcell.ColorDarkBlue)
 	body := tview.NewTextView()
 	body.SetTextColor(tcell.ColorLightGray)
 	summary := tview.NewTextView()
-	//summary.SetBackgroundColor(tcell.ColorDarkBlue)
 	grid := tview.NewGrid().
 		SetRows(1, 0, 1).
 		AddItem(header, 0, 0, 1, 1, 0, 0, false).
