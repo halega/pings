@@ -1,5 +1,7 @@
 # Pinger
 
+![pinger.png](https://i.imgur.com/GIXWTf6.png)
+
 ```
 root@longt:~# ping ya.ru
 PING ya.ru(ya.ru (2a02:6b8::2:242)) 56 data bytes
