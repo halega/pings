@@ -35,6 +35,8 @@ rtt min/avg/max/mdev = 21.485/21.570/21.695/0.199 ms
 
 - https://github.com/gdamore/tcell
 - https://github.com/rivo/tview
+  - https://rocketnine.space/post/tview-and-you/
+  - https://flak.tedunangst.com/post/package-of-the-moment-tview-and-tcell
 - https://gitlab.com/tslocum/cview
 - https://github.com/gcla/gowid
 - https://github.com/digineo/go-ping
