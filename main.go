@@ -4,12 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"math"
-	"os"
+	"net"
 	"time"
 
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
-	"github.com/sparrc/go-ping"
 )
 
 const headerTmpl = "PING %s [%s] with %d bytes of data:"
@@ -43,30 +42,38 @@ func main() {
 		SetRoot(grid, true).
 		SetFocus(body)
 
-	pinger, err := ping.NewPinger(host)
+	ip, err := net.ResolveIPAddr("ip", host)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
+		panic(err)
 	}
-	pinger.Size = 32
-	pinger.Count = -1
-	pinger.Interval = 1 * time.Second
-	pinger.Timeout = 9223372036854775807
-	pinger.SetPrivileged(true)
-	pinger.OnRecv = func(p *ping.Packet) {
-		line := fmt.Sprintf(bodyTmpl, p.Nbytes, p.Addr, p.IPAddr, p.Seq, p.Ttl, p.Rtt.Milliseconds())
-		body.Write([]byte(line))
-		stat := pinger.Statistics()
-		sumTxt := fmt.Sprintf(summaryTmpl, stat.PacketsSent, stat.PacketsRecv, stat.PacketsSent-stat.PacketsRecv,
-			int64(math.Round(stat.PacketLoss)), stat.MinRtt.Milliseconds(), stat.MaxRtt.Milliseconds(),
-			stat.AvgRtt.Milliseconds())
-		summary.SetText(sumTxt)
-		app.Draw()
+
+	pinger, err := ping.New("0.0.0.0", "")
+	if err != nil {
+		panic(err)
 	}
-	go pinger.Run()
+	defer pinger.Close()
+
+	go ping(pinger)
 
 	header.SetText(fmt.Sprintf(headerTmpl, pinger.Addr(), pinger.IPAddr(), pinger.Size))
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
+}
+
+func ping(pinger *ping.Pinger, addr *net.IPAddr) {
+	for {
+		pinger.Ping(addr, 5*time.Second)
+	}
+}
+
+func onRecv(p *ping.Packet) {
+	line := fmt.Sprintf(bodyTmpl, p.Nbytes, p.Addr, p.IPAddr, p.Seq, p.Ttl, p.Rtt.Milliseconds())
+	body.Write([]byte(line))
+	stat := pinger.Statistics()
+	sumTxt := fmt.Sprintf(summaryTmpl, stat.PacketsSent, stat.PacketsRecv, stat.PacketsSent-stat.PacketsRecv,
+		int64(math.Round(stat.PacketLoss)), stat.MinRtt.Milliseconds(), stat.MaxRtt.Milliseconds(),
+		stat.AvgRtt.Milliseconds())
+	summary.SetText(sumTxt)
+	app.Draw()
 }
