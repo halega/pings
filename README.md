@@ -2,6 +2,37 @@
 
 ![pinger.png](https://i.imgur.com/GIXWTf6.png)
 
+## Usage
+
+```
+pings www.google.com
+```
+
+## Libraries
+
+- https://github.com/gdamore/tcell
+- https://github.com/rivo/tview
+- https://github.com/sparrc/go-ping
+
+
+## Research
+
+### Libraries & Projects
+
+- https://github.com/gdamore/tcell
+- https://github.com/rivo/tview
+  - https://rocketnine.space/post/tview-and-you/
+  - https://flak.tedunangst.com/post/package-of-the-moment-tview-and-tcell
+- https://gitlab.com/tslocum/cview
+- https://github.com/gcla/gowid
+- https://github.com/digineo/go-ping
+- https://github.com/sparrc/go-ping
+- https://github.com/glinton/ping
+- https://github.com/zyedidia/micro
+- https://github.com/gcla/termshark
+
+### System's Ping Outputs
+
 ```
 root@longt:~# ping ya.ru
 PING ya.ru(ya.ru (2a02:6b8::2:242)) 56 data bytes
@@ -29,25 +60,4 @@ Summary bar:
 -------------------------------------------------------------------------------
 5 packets transmitted, 5 received, 0% packet loss, time 4005ms
 rtt min/avg/max/mdev = 21.485/21.570/21.695/0.199 ms
-```
-
-## Libraries
-
-- https://github.com/gdamore/tcell
-- https://github.com/rivo/tview
-  - https://rocketnine.space/post/tview-and-you/
-  - https://flak.tedunangst.com/post/package-of-the-moment-tview-and-tcell
-- https://gitlab.com/tslocum/cview
-- https://github.com/gcla/gowid
-- https://github.com/digineo/go-ping
-- https://github.com/sparrc/go-ping
-- https://github.com/glinton/ping
-- https://github.com/zyedidia/micro
-- https://github.com/gcla/termshark
-
-## Use
-
-```
-ping ya.ru | pings
-pings ya.ru 192.168.31.1 google.com
 ```
