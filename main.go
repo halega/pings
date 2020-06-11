@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/digineo/go-ping"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 )
@@ -16,6 +17,17 @@ const bodyTmpl = "%d bytes from %s (%s): icmp_seq=%d ttl=%d time=%d ms\n"
 const summaryTmpl = "Packets: %d sent, %d received, %d lost (%d%% loss). RTT: min = %d ms, max = %d ms, avg = %d ms"
 
 var host string
+
+type stat struct {
+	pktSent int
+	pktLoss float64
+	err     string
+	last    time.Duration
+	best    time.Duration
+	worst   time.Duration
+	mean    time.Duration
+	stddev  time.Duration
+}
 
 func main() {
 	flag.Usage = func() {
@@ -53,7 +65,7 @@ func main() {
 	}
 	defer pinger.Close()
 
-	go ping(pinger)
+	rtt, err := pinger.Ping(ip, 3*time.Second)
 
 	header.SetText(fmt.Sprintf(headerTmpl, pinger.Addr(), pinger.IPAddr(), pinger.Size))
 	if err := app.Run(); err != nil {
@@ -61,7 +73,7 @@ func main() {
 	}
 }
 
-func ping(pinger *ping.Pinger, addr *net.IPAddr) {
+func ping2(pinger *ping.Pinger, addr *net.IPAddr) {
 	for {
 		pinger.Ping(addr, 5*time.Second)
 	}
