@@ -91,9 +91,13 @@ func (ui *uiApp) update(s *stat) {
 	}
 	ui.body.Write([]byte(bodyLine))
 
-	sumLine := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.f%% loss). RTT: min = %d ms, max = %d ms, avg = %d ms",
-		s.sent, s.sent-s.lost, s.lost, s.loss, s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
-	ui.summary.SetText(sumLine)
+	summaryLine := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.f%% loss).",
+		s.sent, s.sent-s.lost, s.lost, s.loss)
+	if s.sent != s.lost {
+		summaryLine += fmt.Sprintf(" RTT: min = %d ms, max = %d ms, avg = %d ms",
+			s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
+	}
+	ui.summary.SetText(summaryLine)
 
 	ui.app.Draw()
 }
@@ -111,12 +115,14 @@ func main() {
 
 	ipAddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
 
 	pinger, err := ping.New("0.0.0.0", "")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
 	defer pinger.Close()
 
@@ -132,6 +138,7 @@ func main() {
 	}()
 
 	if err := ui.app.Run(); err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
 }
