@@ -40,10 +40,12 @@ func (s *stat) addRTT(rtt time.Duration, err error) {
 		return
 	}
 
-	if rtt < s.min {
+	if s.sent == 1 {
+		s.min = rtt
+	} else if s.min > rtt {
 		s.min = rtt
 	}
-	if rtt > s.max {
+	if s.max < rtt {
 		s.max = rtt
 	}
 
