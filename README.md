@@ -31,6 +31,60 @@ pings www.google.com
 - https://github.com/zyedidia/micro
 - https://github.com/gcla/termshark
 
+### sparrc/go-ping API
+
+```go
+pinger, _ := ping.NewPinger(host)
+defer pinger.Stop()
+
+pinger.OnRecv = func(pkt *ping.Packet) {
+	fmt.Printf("%d bytes from %s: icmp_seq=%d time=%v ttl=%v\n",
+		pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.Ttl)
+}
+pinger.OnFinish = func(stats *ping.Statistics) {
+  fmt.Printf("\n--- %s ping statistics ---\n", stats.Addr)
+  fmt.Printf("%d packets transmitted, %d packets received, %v%% packet loss\n",
+    stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)
+  fmt.Printf("round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
+    stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
+}
+pinger.Count = *count
+pinger.Interval = *interval
+pinger.Timeout = *timeout
+pinger.SetPrivileged(*privileged)
+
+fmt.Printf("PING %s (%s):\n", pinger.Addr(), pinger.IPAddr())
+pinger.Run()
+```
+
+### digineo/go-ping API
+
+```go
+ip, _ := net.ResolveIPAddr("ip4", host)
+pinger, _ := ping.New("0.0.0.0", "")
+defer pinger.Close()
+rtt, err := pinger.Ping(ip, 3*time.Second)
+```
+
+### glinton/ping API
+
+```go
+ipAddr, _ := net.ResolveIPAddr("ip4", host)
+data := bytes.Repeat([]byte{1}, 56)
+c := &ping.Client{}
+req := ping.Request{
+  Dst:  net.ParseIP(host.String()),
+  Src:  net.ParseIP(getAddr(*iface)),
+  Data: data,
+}
+ctx, _ := context.WithTimeout(context.Background(), time.Duration(*timeout*float64(time.Second)))
+resp, err := c.Do(ctx, &req)
+if err != nil {
+  fmt.Println("failed to ping:", err)
+  return
+}
+```
+
 ### System's Ping Outputs
 
 ```

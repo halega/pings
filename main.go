@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math"
 	"net"
 	"time"
 
@@ -31,7 +30,7 @@ type stat struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Println("ping destination")
+		fmt.Println("Usage: pings <host>")
 	}
 	flag.Parse()
 	if len(flag.Args()) != 1 {
@@ -54,7 +53,7 @@ func main() {
 		SetRoot(grid, true).
 		SetFocus(body)
 
-	ip, err := net.ResolveIPAddr("ip", host)
+	ipaddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
 		panic(err)
 	}
@@ -65,27 +64,34 @@ func main() {
 	}
 	defer pinger.Close()
 
-	rtt, err := pinger.Ping(ip, 3*time.Second)
+	go func() {
+		for {
+			rtt, err := pinger.Ping(ipaddr, 3*time.Second)
+			var line string
+			if err != nil {
+				line = "Request timed out.\n"
+			} else {
+				line = fmt.Sprintf(bodyTmpl, pinger.PayloadSize(), host, ipaddr, 0, 0, rtt.Milliseconds())
+			}
+			body.Write([]byte(line))
+			app.Draw()
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
-	header.SetText(fmt.Sprintf(headerTmpl, pinger.Addr(), pinger.IPAddr(), pinger.Size))
+	header.SetText(fmt.Sprintf(headerTmpl, host, ipaddr, pinger.PayloadSize()))
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
 }
 
-func ping2(pinger *ping.Pinger, addr *net.IPAddr) {
-	for {
-		pinger.Ping(addr, 5*time.Second)
-	}
-}
-
-func onRecv(p *ping.Packet) {
-	line := fmt.Sprintf(bodyTmpl, p.Nbytes, p.Addr, p.IPAddr, p.Seq, p.Ttl, p.Rtt.Milliseconds())
-	body.Write([]byte(line))
-	stat := pinger.Statistics()
-	sumTxt := fmt.Sprintf(summaryTmpl, stat.PacketsSent, stat.PacketsRecv, stat.PacketsSent-stat.PacketsRecv,
-		int64(math.Round(stat.PacketLoss)), stat.MinRtt.Milliseconds(), stat.MaxRtt.Milliseconds(),
-		stat.AvgRtt.Milliseconds())
-	summary.SetText(sumTxt)
-	app.Draw()
-}
+// func onRecv(p *ping.Packet) {
+// 	line := fmt.Sprintf(bodyTmpl, p.Nbytes, p.Addr, p.IPAddr, p.Seq, p.Ttl, p.Rtt.Milliseconds())
+// 	body.Write([]byte(line))
+// 	stat := pinger.Statistics()
+// 	sumTxt := fmt.Sprintf(summaryTmpl, stat.PacketsSent, stat.PacketsRecv, stat.PacketsSent-stat.PacketsRecv,
+// 		int64(math.Round(stat.PacketLoss)), stat.MinRtt.Milliseconds(), stat.MaxRtt.Milliseconds(),
+// 		stat.AvgRtt.Milliseconds())
+// 	summary.SetText(sumTxt)
+// 	app.Draw()
+// }
