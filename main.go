@@ -11,21 +11,89 @@ import (
 	"github.com/rivo/tview"
 )
 
-const headerTmpl = "PING %s [%s] with %d bytes of data:"
-const bodyTmpl = "%d bytes from %s (%s): icmp_seq=%d ttl=%d time=%d ms\n"
-const summaryTmpl = "Packets: %d sent, %d received, %d lost (%d%% loss). RTT: min = %d ms, max = %d ms, avg = %d ms"
-
 var host string
 
 type stat struct {
-	pktSent int
-	pktLoss float64
-	err     string
-	last    time.Duration
-	best    time.Duration
-	worst   time.Duration
+	sent    int
+	lost    int
+	loss    float64
+	lastErr error
+	lastRTT time.Duration
+	min     time.Duration
+	max     time.Duration
+	avg     time.Duration
 	mean    time.Duration
 	stddev  time.Duration
+	rtts    []time.Duration
+	size    uint16
+	total   time.Duration
+}
+
+func (s *stat) addRTT(rtt time.Duration, err error) {
+	s.sent++
+	s.lastRTT = rtt
+	s.lastErr = err
+
+	if err != nil {
+		s.lost++
+	}
+	s.loss = float64(s.lost) / float64(s.sent) * 100
+	if err != nil {
+		return
+	}
+
+	if rtt < s.min {
+		s.min = rtt
+	}
+	if rtt > s.max {
+		s.max = rtt
+	}
+
+	s.rtts = append(s.rtts, rtt)
+	s.total += rtt
+	s.avg = s.total / time.Duration(len(s.rtts))
+}
+
+type uiApp struct {
+	header  *tview.TextView
+	body    *tview.TextView
+	summary *tview.TextView
+	app     *tview.Application
+}
+
+func newUI(host, ipaddr string, payloadSize uint16) *uiApp {
+	ui := new(uiApp)
+	ui.header = tview.NewTextView()
+	ui.body = tview.NewTextView()
+	ui.body.SetTextColor(tcell.ColorLightGray)
+	ui.summary = tview.NewTextView()
+	grid := tview.NewGrid().
+		SetRows(1, 0, 1).
+		AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
+		AddItem(ui.body, 1, 0, 1, 1, 0, 0, true).
+		AddItem(ui.summary, 2, 0, 1, 1, 0, 0, false)
+	ui.app = tview.NewApplication().
+		EnableMouse(true).
+		SetRoot(grid, true).
+		SetFocus(ui.body)
+	ui.header.SetText(fmt.Sprintf("PING %s [%s] with %d bytes of data:", host, ipaddr, payloadSize))
+	return ui
+}
+
+func (ui *uiApp) update(s *stat) {
+	bodyLine := ""
+	if s.lastErr != nil {
+		bodyLine = fmt.Sprintln(s.lastErr)
+	} else {
+		bodyLine = fmt.Sprintf("icmp_seq=%d time=%d ms\n", s.sent, s.lastRTT.Milliseconds())
+	}
+	ui.body.Write([]byte(bodyLine))
+
+	sumLine := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.f%% loss). RTT: min = %d ms, max = %d ms, avg = %d ms",
+		s.sent, s.sent-s.lost, s.lost, s.loss, s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
+	ui.summary.SetText(sumLine)
+
+	ui.app.Draw()
 }
 
 func main() {
@@ -39,20 +107,6 @@ func main() {
 	}
 	host = flag.Arg(0)
 
-	header := tview.NewTextView()
-	body := tview.NewTextView()
-	body.SetTextColor(tcell.ColorLightGray)
-	summary := tview.NewTextView()
-	grid := tview.NewGrid().
-		SetRows(1, 0, 1).
-		AddItem(header, 0, 0, 1, 1, 0, 0, false).
-		AddItem(body, 1, 0, 1, 1, 0, 0, true).
-		AddItem(summary, 2, 0, 1, 1, 0, 0, false)
-	app := tview.NewApplication().
-		EnableMouse(true).
-		SetRoot(grid, true).
-		SetFocus(body)
-
 	ipaddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
 		panic(err)
@@ -64,34 +118,18 @@ func main() {
 	}
 	defer pinger.Close()
 
+	ui := newUI(host, ipaddr.String(), pinger.PayloadSize())
+	s := &stat{}
+
 	go func() {
 		for {
-			rtt, err := pinger.Ping(ipaddr, 3*time.Second)
-			var line string
-			if err != nil {
-				line = "Request timed out.\n"
-			} else {
-				line = fmt.Sprintf(bodyTmpl, pinger.PayloadSize(), host, ipaddr, 0, 0, rtt.Milliseconds())
-			}
-			body.Write([]byte(line))
-			app.Draw()
+			s.addRTT(pinger.Ping(ipaddr, 3*time.Second))
+			ui.update(s)
 			time.Sleep(1 * time.Second)
 		}
 	}()
 
-	header.SetText(fmt.Sprintf(headerTmpl, host, ipaddr, pinger.PayloadSize()))
-	if err := app.Run(); err != nil {
+	if err := ui.app.Run(); err != nil {
 		panic(err)
 	}
 }
-
-// func onRecv(p *ping.Packet) {
-// 	line := fmt.Sprintf(bodyTmpl, p.Nbytes, p.Addr, p.IPAddr, p.Seq, p.Ttl, p.Rtt.Milliseconds())
-// 	body.Write([]byte(line))
-// 	stat := pinger.Statistics()
-// 	sumTxt := fmt.Sprintf(summaryTmpl, stat.PacketsSent, stat.PacketsRecv, stat.PacketsSent-stat.PacketsRecv,
-// 		int64(math.Round(stat.PacketLoss)), stat.MinRtt.Milliseconds(), stat.MaxRtt.Milliseconds(),
-// 		stat.AvgRtt.Milliseconds())
-// 	summary.SetText(sumTxt)
-// 	app.Draw()
-// }
