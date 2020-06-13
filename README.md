@@ -2,16 +2,11 @@
 
 ![pinger.png](https://i.imgur.com/3utgDss.png)
 
-## Installation
+## Installation & Usage
 
 ```
-go get -u https://github.com/halega/pings
-```
-
-## Usage
-
-```
-pings www.google.com
+go get -u github.com/halega/pings
+~/go/bin/pings www.google.com
 ```
 
 ## Libraries
