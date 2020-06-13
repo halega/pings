@@ -11,8 +11,6 @@ import (
 	"github.com/rivo/tview"
 )
 
-var host string
-
 type stat struct {
 	sent    int
 	lost    int
@@ -61,12 +59,16 @@ type uiApp struct {
 	app     *tview.Application
 }
 
-func newUI(host, ipaddr string, payloadSize uint16) *uiApp {
-	ui := new(uiApp)
-	ui.header = tview.NewTextView()
-	ui.body = tview.NewTextView()
+func newUIApp(host, ipaddr string, payloadSize uint16) *uiApp {
+	ui := &uiApp{
+		header:  tview.NewTextView(),
+		body:    tview.NewTextView(),
+		summary: tview.NewTextView(),
+	}
+
+	ui.header.SetText(fmt.Sprintf("PING %s [%s] with %d bytes of data:", host, ipaddr, payloadSize))
 	ui.body.SetTextColor(tcell.ColorLightGray)
-	ui.summary = tview.NewTextView()
+
 	grid := tview.NewGrid().
 		SetRows(1, 0, 1).
 		AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
@@ -76,7 +78,7 @@ func newUI(host, ipaddr string, payloadSize uint16) *uiApp {
 		EnableMouse(true).
 		SetRoot(grid, true).
 		SetFocus(ui.body)
-	ui.header.SetText(fmt.Sprintf("PING %s [%s] with %d bytes of data:", host, ipaddr, payloadSize))
+
 	return ui
 }
 
@@ -101,13 +103,13 @@ func main() {
 		fmt.Println("Usage: pings <host>")
 	}
 	flag.Parse()
-	if len(flag.Args()) != 1 {
+	if flag.NArg() != 1 {
 		flag.Usage()
 		return
 	}
-	host = flag.Arg(0)
+	host := flag.Arg(0)
 
-	ipaddr, err := net.ResolveIPAddr("ip4", host)
+	ipAddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
 		panic(err)
 	}
@@ -118,12 +120,12 @@ func main() {
 	}
 	defer pinger.Close()
 
-	ui := newUI(host, ipaddr.String(), pinger.PayloadSize())
+	ui := newUIApp(host, ipAddr.String(), pinger.PayloadSize())
 	s := &stat{}
 
 	go func() {
 		for {
-			s.addRTT(pinger.Ping(ipaddr, 3*time.Second))
+			s.addRTT(pinger.Ping(ipAddr, 3*time.Second))
 			ui.update(s)
 			time.Sleep(1 * time.Second)
 		}
