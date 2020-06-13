@@ -18,7 +18,7 @@ pings www.google.com
 
 - https://github.com/gdamore/tcell
 - https://github.com/rivo/tview
-- https://github.com/sparrc/go-ping
+- https://github.com/digineo/go-ping
 
 
 ## Research
