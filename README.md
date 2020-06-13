@@ -2,6 +2,12 @@
 
 ![pinger.png](https://i.imgur.com/3utgDss.png)
 
+## Installation
+
+```
+go get -u https://github.com/halega/pings
+```
+
 ## Usage
 
 ```
