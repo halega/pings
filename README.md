@@ -1,6 +1,6 @@
 # Pinger
 
-![pinger.png](https://i.imgur.com/GIXWTf6.png)
+![pinger.png](https://i.imgur.com/3utgDss.png)
 
 ## Usage
 
