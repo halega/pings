@@ -6,10 +6,25 @@ Shows ping log and statistics in real time.
 
 ## Installation & Usage
 
-```
+## Linux
+
+```sh
 go get -u github.com/halega/pings
-~/go/bin/pings www.google.com
+cd ~/go/bin
+sudo setcap cap_net_raw+ep pings
+pings www.google.com
 ```
+
+## Windows
+
+```
+git clone https://github.com/halega/pings.git
+cd pings
+go build
+pings www.google.com
+```
+
+Press Ctrl+C to exit.
 
 ## Libraries
 
