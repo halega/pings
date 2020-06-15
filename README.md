@@ -17,6 +17,13 @@ go get -u github.com/halega/pings
 - https://github.com/rivo/tview
 - https://github.com/digineo/go-ping
 
+## License
+
+[MIT](http://opensource.org/licenses/MIT)
+
+Copyright (c) 2020-present, Stanislav Kalashnikov
+
+---
 
 ## Research
 
