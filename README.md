@@ -1,4 +1,6 @@
-# Pinger
+# pings
+
+Shows ping log and statistics in real time.
 
 ![pinger.png](https://i.imgur.com/g3AIoq0.png)
 
