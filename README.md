@@ -31,6 +31,7 @@ go get -u github.com/halega/pings
 - https://github.com/glinton/ping
 - https://github.com/zyedidia/micro
 - https://github.com/gcla/termshark
+- https://github.com/tenox7/gpp - GoPingPlot - A Multi Host Ping Plotting Utility Written In Go.
 
 ### sparrc/go-ping API
 
