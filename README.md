@@ -1,6 +1,6 @@
 # Pinger
 
-![pinger.png](https://i.imgur.com/3utgDss.png)
+![pinger.png](https://i.imgur.com/g3AIoq0.png)
 
 ## Installation & Usage
 
