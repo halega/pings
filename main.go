@@ -27,10 +27,15 @@ type stat struct {
 	total   time.Duration
 	start   time.Time
 	uptime  time.Duration
+	timeout time.Duration
 }
 
-func newStat() *stat {
-	return &stat{start: time.Now()}
+func newStat(timeout time.Duration) *stat {
+	return &stat{
+		start:   time.Now(),
+		min:     timeout + time.Hour,
+		timeout: timeout,
+	}
 }
 
 func (s *stat) update(rtt time.Duration, err error) {
@@ -50,7 +55,7 @@ func (s *stat) update(rtt time.Duration, err error) {
 		return
 	}
 
-	if s.sent == 1 || s.min > rtt {
+	if s.min > rtt {
 		s.min = rtt
 	}
 	if s.max < rtt {
@@ -140,11 +145,11 @@ func main() {
 	defer pinger.Close()
 
 	ui := newUIApp(host, ipAddr.String(), pinger.PayloadSize())
-	s := newStat()
+	s := newStat(3 * time.Second)
 
 	go func() {
 		for {
-			s.update(pinger.Ping(ipAddr, 3*time.Second))
+			s.update(pinger.Ping(ipAddr, s.timeout))
 			ui.update(s)
 			time.Sleep(1 * time.Second)
 		}
