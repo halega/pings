@@ -25,9 +25,19 @@ type stat struct {
 	rtts    []time.Duration
 	size    uint16
 	total   time.Duration
+	start   time.Time
+	uptime  time.Duration
 }
 
-func (s *stat) addRTT(rtt time.Duration, err error) {
+func newStat() *stat {
+	return &stat{start: time.Now()}
+}
+
+func (s *stat) update(rtt time.Duration, err error) {
+	if !s.start.IsZero() {
+		s.uptime = time.Since(s.start)
+	}
+
 	s.sent++
 	s.lastRTT = rtt
 	s.lastErr = err
@@ -94,8 +104,11 @@ func (ui *uiApp) update(s *stat) {
 	summaryLine := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.f%% loss).",
 		s.sent, s.sent-s.lost, s.lost, s.loss)
 	if s.sent != s.lost {
-		summaryLine += fmt.Sprintf(" RTT: min = %d ms, max = %d ms, avg = %d ms",
+		summaryLine += fmt.Sprintf(" RTT: min = %d ms, max = %d ms, avg = %d ms.",
 			s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
+	}
+	if s.uptime != 0 {
+		summaryLine += fmt.Sprintf(" Uptime: %v", s.uptime.Round(time.Second))
 	}
 	ui.summary.SetText(summaryLine)
 
@@ -127,11 +140,11 @@ func main() {
 	defer pinger.Close()
 
 	ui := newUIApp(host, ipAddr.String(), pinger.PayloadSize())
-	s := &stat{}
+	s := newStat()
 
 	go func() {
 		for {
-			s.addRTT(pinger.Ping(ipAddr, 3*time.Second))
+			s.update(pinger.Ping(ipAddr, 3*time.Second))
 			ui.update(s)
 			time.Sleep(1 * time.Second)
 		}
