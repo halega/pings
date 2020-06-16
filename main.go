@@ -67,6 +67,19 @@ func (s *stat) update(rtt time.Duration, err error) {
 	s.avg = s.total / time.Duration(len(s.rtts))
 }
 
+func (s *stat) summary() string {
+	sum := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.0f%% loss).",
+		s.sent, s.sent-s.lost, s.lost, s.loss)
+	if s.sent != s.lost {
+		sum += fmt.Sprintf(" RTT: min = %d ms, max = %d ms, avg = %d ms.",
+			s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
+	}
+	if s.uptime != 0 {
+		sum += fmt.Sprintf(" Uptime: %v", s.uptime.Round(time.Second))
+	}
+	return sum
+}
+
 type uiApp struct {
 	header  *tview.TextView
 	body    *tview.TextView
@@ -105,18 +118,7 @@ func (ui *uiApp) update(s *stat) {
 		bodyLine = fmt.Sprintf("icmp_seq=%d time=%d ms\n", s.sent, s.lastRTT.Milliseconds())
 	}
 	ui.body.Write([]byte(bodyLine))
-
-	summaryLine := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.f%% loss).",
-		s.sent, s.sent-s.lost, s.lost, s.loss)
-	if s.sent != s.lost {
-		summaryLine += fmt.Sprintf(" RTT: min = %d ms, max = %d ms, avg = %d ms.",
-			s.min.Milliseconds(), s.max.Milliseconds(), s.avg.Milliseconds())
-	}
-	if s.uptime != 0 {
-		summaryLine += fmt.Sprintf(" Uptime: %v", s.uptime.Round(time.Second))
-	}
-	ui.summary.SetText(summaryLine)
-
+	ui.summary.SetText(s.summary())
 	ui.app.Draw()
 }
 
@@ -159,4 +161,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	fmt.Printf("PING %s (%s) %d bytes of data.\n", host, ipAddr, pinger.PayloadSize())
+	fmt.Printf("\n--- %s ping statistics ---\n", host)
+	fmt.Println(s.summary())
 }
