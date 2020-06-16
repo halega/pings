@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/digineo/go-ping"
@@ -12,6 +13,7 @@ import (
 )
 
 type stat struct {
+	mu      sync.Mutex
 	sent    int
 	lost    int
 	loss    float64
@@ -39,6 +41,9 @@ func newStat(timeout time.Duration) *stat {
 }
 
 func (s *stat) update(rtt time.Duration, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if !s.start.IsZero() {
 		s.uptime = time.Since(s.start)
 	}
@@ -68,6 +73,9 @@ func (s *stat) update(rtt time.Duration, err error) {
 }
 
 func (s *stat) summary() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	sum := fmt.Sprintf("Packets: %d sent, %d received, %d lost (%.0f%% loss).",
 		s.sent, s.sent-s.lost, s.lost, s.loss)
 	if s.sent != s.lost {
