@@ -50,21 +50,17 @@ func (s *stat) update(rtt time.Duration, err error) {
 
 	if err != nil {
 		s.lost++
+	} else {
+		if s.min > rtt {
+			s.min = rtt
+		}
+		if s.max < rtt {
+			s.max = rtt
+		}
+		s.total += rtt
+		s.avg = s.total / time.Duration(s.sent-s.lost)
 	}
 	s.loss = float64(s.lost) / float64(s.sent) * 100
-	if err != nil {
-		return
-	}
-
-	if s.min > rtt {
-		s.min = rtt
-	}
-	if s.max < rtt {
-		s.max = rtt
-	}
-
-	s.total += rtt
-	s.avg = s.total / time.Duration(s.sent-s.lost)
 }
 
 func (s *stat) summary() string {
