@@ -22,10 +22,6 @@ type stat struct {
 	min     time.Duration
 	max     time.Duration
 	avg     time.Duration
-	mean    time.Duration
-	stddev  time.Duration
-	rtts    []time.Duration
-	size    uint16
 	total   time.Duration
 	start   time.Time
 	uptime  time.Duration
@@ -67,9 +63,8 @@ func (s *stat) update(rtt time.Duration, err error) {
 		s.max = rtt
 	}
 
-	s.rtts = append(s.rtts, rtt)
 	s.total += rtt
-	s.avg = s.total / time.Duration(len(s.rtts))
+	s.avg = s.total / time.Duration(s.sent-s.lost)
 }
 
 func (s *stat) summary() string {
