@@ -122,15 +122,22 @@ func (ui *uiApp) update(s *stat) {
 }
 
 func main() {
+	size := flag.Uint("s", 56, "payload size (default: 56 bytes)")
 	flag.Usage = func() {
 		fmt.Println("Usage: pings <host>")
+		fmt.Println("\t-s <bytes>\tpayload size (default: 56 bytes, max: 65535)")
 	}
 	flag.Parse()
-	if flag.NArg() != 1 {
+	if flag.NArg() == 0 || flag.NArg() > 2 {
 		flag.Usage()
 		return
 	}
 	host := flag.Arg(0)
+
+	if *size > 65535 {
+		flag.Usage()
+		return
+	}
 
 	ipAddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
@@ -144,6 +151,8 @@ func main() {
 		return
 	}
 	defer pinger.Close()
+
+	pinger.SetPayloadSize(uint16(*size))
 
 	ui := newUIApp(host, ipAddr.String(), pinger.PayloadSize())
 	s := newStat(3 * time.Second)
